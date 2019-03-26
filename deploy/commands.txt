@@ -1,0 +1,23 @@
+// build
+gox -osarch="linux/amd64" --output="../../deploy/build/app"
+
+// docker build
+docker build -t gocaseapi .
+// docker tag for push
+docker tag cf4228e01d36 surenderssm/testapi
+// push to dockerhub profile
+docker push surenderssm/testapi
+
+
+//os environment variable
+
+ApplicationInsightKey 
+StorageAccountName
+StorageAccountKey
+OxfordTimeOutForService
+PortNumber 
+OxfordBaseURL
+OxfordAppId
+OxfordAppSecret
+ContainerName
+WordFileName
