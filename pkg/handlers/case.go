@@ -13,14 +13,14 @@ import (
 
 const tokenKey string = "token"
 const caseTypeKey string = "type"
-const trackingKey string = "x-ms-trackingid"
+const trackingKey string = "trackingid"
 const correlationKey string = "x-ms-correlation"
 
 // NamingModel case model
 type NamingModel struct {
 	Token       string `json:"token"`
 	Result      string `json:"result"`
-	CaseType    string `json:"caseType"`
+	CaseType    string `json:"type"`
 	TrackingID  string `json:"trackingID"`
 	TrackingURL string `json:"trackingUrl"`
 	Message     string `json:"message"`
@@ -41,8 +41,7 @@ var thresholdLengthForTokenForAsyncProcessing = 1000
 // Name process the tokens as per the given case
 // TODO : have a mechanism to avoid throttling (429) by keeping a check on node signals / total ongoing request
 func Name(w http.ResponseWriter, r *http.Request) {
-
-	var duration time.Duration
+	now := time.Now()
 	token, caseType := parseNameRequest(r)
 	var model *NamingModel
 
@@ -61,14 +60,14 @@ func Name(w http.ResponseWriter, r *http.Request) {
 		// 200
 		model.StatusCode = http.StatusOK
 	} else if r.Method == "POST" {
-		model := processNameLongRunning(token, caseType)
-		// 201 - long running operation
+		model = processNameLongRunning(token, caseType)
+		// 202 - long running operation
 		// caller has to track result at TrackingURL
 		model.StatusCode = http.StatusAccepted
 	}
 	// Log the Request / info
 	// TODO : log the custom event to keep track of varios aspect of the endpoint
-	defer logRequestWithModel(r, model, duration)
+	defer logRequestWithModel(r, model, time.Since(now))
 	w.WriteHeader(model.StatusCode)
 	json.NewEncoder(w).Encode(model)
 
@@ -76,29 +75,34 @@ func Name(w http.ResponseWriter, r *http.Request) {
 
 // TrackWork .
 func TrackWork(w http.ResponseWriter, r *http.Request) {
-	var duration time.Duration
+	now := time.Now()
 	trackingID := getQuery(trackingKey, r)
+
+	if trackingID == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	// HEAD instead of get can be perfomed to check the presence instead of failing in case of missing
 	data, error := BlobStore.GetBlob(trackingID)
 	model := NamingModel{}
-	if error != nil {
+	if error == nil {
 		// blob is being returned
 		// notion of TTL for blob should be handle to delete the allready served model
 		// TTL can be kept as 24 hour or so to stop ever growing data
 		json.Unmarshal([]byte(data), &model)
 		model.StatusCode = http.StatusOK
 	} else {
-		// 201 if the request is still under process and results are not returned yet
+		// 202 if the request is still under process and results are not returned yet
 		model = NamingModel{TrackingID: trackingID, TrackingURL: getTrackingURI(trackingID), StatusCode: http.StatusAccepted}
 	}
-	defer logRequestWithModel(r, &model, duration)
+	defer logRequestWithModel(r, &model, time.Since(now))
 	w.WriteHeader(model.StatusCode)
 	json.NewEncoder(w).Encode(model)
 }
 
 func getTrackingURI(trackingID string) string {
 	// TODO : concatenate with hostname to get full URI
-	return "v1/trackwork/" + trackingID
+	return "v1/track?" + trackingKey + "=" + trackingID
 }
 
 func processName(token string, caseType string) *NamingModel {
@@ -115,7 +119,7 @@ func processNameLongRunning(token string, caseType string) *NamingModel {
 	// notion of producer/Consumer can also solve this proble
 	// for example light weight Azure function can be poll on the queue to process the token and keep the reslt in the store
 	go processTokensLongRunning(token, caseType, trackingID)
-	item := NamingModel{Token: token, TrackingID: trackingID, CaseType: caseType}
+	item := NamingModel{Token: token, TrackingID: trackingID, CaseType: caseType, TrackingURL: getTrackingURI(trackingID)}
 	return &item
 }
 
@@ -177,7 +181,7 @@ func parseNameRequest(r *http.Request) (string, string) {
 		var model NamingModel
 		err := decoder.Decode(&model)
 
-		if err != nil {
+		if err == nil {
 			token = model.Token
 			caseType = model.CaseType
 		} else {

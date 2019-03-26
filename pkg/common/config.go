@@ -1,6 +1,9 @@
 package common
 
-import "os"
+import (
+	"os"
+	"strconv"
+)
 
 type Config struct {
 }
@@ -15,36 +18,60 @@ func (config *Config) Get(key string) string {
 
 func (config *Config) GetPortNumber() string {
 
-	portNumber := config.Get("APPHOST_PortNumber")
-	return portNumber
+	portNumber := config.Get("PortNumber")
+	return ":" + portNumber
 }
 
 func (config *Config) GetStorageAccountName() string {
 
-	value := config.Get("APPHOST_StorageAccountName")
+	value := config.Get("StorageAccountName")
 	return value
 }
 
 func (config *Config) GetStorageAccountKey() string {
 
-	value := config.Get("APPHOST_StorageAccountKey")
+	value := config.Get("StorageAccountKey")
 	return value
 }
 
-func (config *Config) GetTimeOutForService() string {
+func (config *Config) GetOxfordTimeOutForService() int {
 
-	value := config.Get("APPHOST_TimeOutForService")
-	return value
-}
-
-func (config *Config) GetThresholdLengthForLongRunningQualification() string {
-
-	value := config.Get("APPHOST_ThresholdLengthForLongRunningQualification")
-	return value
+	value := config.Get("OxfordTimeOutForService")
+	i, _ := strconv.Atoi(value)
+	return i
 }
 
 func (config *Config) GetApplicationInsightKey() string {
 
-	value := config.Get("APPHOST_ApplicationInsightKey")
+	value := config.Get("ApplicationInsightKey")
+	return value
+}
+
+func (config *Config) GetOxfordBaseURL() string {
+
+	value := config.Get("OxfordBaseURL")
+	return value
+}
+
+func (config *Config) GetOxfordAppId() string {
+
+	value := config.Get("OxfordAppId")
+	return value
+}
+
+func (config *Config) GetOxfordAppSecret() string {
+
+	value := config.Get("OxfordAppSecret")
+	return value
+}
+
+func (config *Config) GetContainerName() string {
+
+	value := config.Get("ContainerName")
+	return value
+}
+
+func (config *Config) GetWordFileName() string {
+	value := config.Get("WordFileName")
 	return value
 }

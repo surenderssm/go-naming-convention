@@ -32,10 +32,11 @@ func handleRequest() {
 
 	log.Println("caseapiListenAndServing" + time.Now().Format(time.RFC850))
 
+	portNumber := common.ConfigInstance.GetPortNumber()
 	// TODO: get port number from OS Environment
 	// port := os.Getenv("PORT")
 	// default handler is DefaultServeMux
-	log.Fatal(http.ListenAndServe(":8083", nil))
+	log.Fatal(http.ListenAndServe(portNumber, nil))
 }
 
 // Init prepare the handlers to handle upcoming request
@@ -58,36 +59,32 @@ func getTokenProcessor(blobStore *repository.BlobStore) *processor.Tokenizer {
 
 func getLogger() *common.LogClient {
 
-	// TODO : read from config
-	key := ""
+	key := common.ConfigInstance.GetApplicationInsightKey()
 	logger := common.NewLogger(key)
 	return logger
 }
 
 func getBlobStore() *repository.BlobStore {
 
-	accountName := "teststoregocasper"
-	accountKey := ""
-	containerName := "result"
+	accountName := common.ConfigInstance.GetStorageAccountName()
+	accountKey := common.ConfigInstance.GetStorageAccountKey()
+	containerName := common.ConfigInstance.GetContainerName()
 	store := repository.NewBlobStore(accountName, accountKey, containerName)
 	return store
 }
 
 func getWordProvider() *repository.OxfordWordProvider {
-
-	// TODO : read from config
-	baseurl := "https://od-api.oxforddictionaries.com/api/v1/entries/en/"
-	appid := ""
-	appSecret := ""
-	threshold := 200
+	baseurl := common.ConfigInstance.GetOxfordBaseURL()
+	appid := common.ConfigInstance.GetOxfordAppId()
+	appSecret := common.ConfigInstance.GetOxfordAppSecret()
+	threshold := common.ConfigInstance.GetOxfordTimeOutForService()
 	wordProvider := repository.NewOxfordWordProvider(baseurl, appid, appSecret, threshold)
 	return wordProvider
 }
 
 func getOfflineWords(store *repository.BlobStore) []string {
 
-	// todo read from config / os env
-	fileName := "words.txt"
+	fileName := common.ConfigInstance.GetWordFileName()
 	data, error := store.GetBlob(fileName)
 
 	if error != nil {

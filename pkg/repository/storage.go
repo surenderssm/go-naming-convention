@@ -61,8 +61,6 @@ func (blobStore *BlobStore) GetBlob(blobName string) (string, error) {
 // CreateBlockBlob creates a new block blob
 func (blobStore *BlobStore) CreateBlockBlob(blobName string, data string) (azblob.BlockBlobURL, error) {
 	b := blobStore.container.NewBlockBlobURL(blobName)
-	data = "blob created by Azure-Samples, okay to delete!"
-
 	_, err := b.Upload(
 		blobStore.ctx,
 		strings.NewReader(data),
