@@ -4,6 +4,9 @@ Platform written in GOLang to process input string to specified case of naming c
 Check out the cool terminal to see API in action : https://gocase.azurewebsites.net/
 
 API endpoint : https://gocase-cus.azurewebsites.net/v1/name?token=onetwothree&type=camel
+
+Docker : docker pull surenderssm/testapi
+
 Check this out for more detials : https://github.com/surenderssm/go-naming-convention/blob/master/deploy/content/go-case-namingconventionAPI.v1.docx
 
 
